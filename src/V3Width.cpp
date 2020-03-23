@@ -292,6 +292,7 @@ private:
     virtual void visit(AstSub* nodep) VL_OVERRIDE { visit_add_sub_replace(nodep, true); }
     virtual void visit(AstDiv* nodep) VL_OVERRIDE { visit_add_sub_replace(nodep, true); }
     virtual void visit(AstMul* nodep) VL_OVERRIDE { visit_add_sub_replace(nodep, true); }
+    virtual void visit(AstPreInc* nodep) VL_OVERRIDE {      visit_add_sub_replace(nodep, true); }
     // These can't promote to real
     virtual void visit(AstModDiv* nodep) VL_OVERRIDE { visit_add_sub_replace(nodep, false); }
     virtual void visit(AstModDivS* nodep) VL_OVERRIDE { visit_add_sub_replace(nodep, false); }

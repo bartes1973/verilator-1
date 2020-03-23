@@ -51,6 +51,7 @@
 #include "V3Gate.h"
 #include "V3GenClk.h"
 #include "V3Graph.h"
+#include "V3Increments.h"
 #include "V3Inline.h"
 #include "V3Inst.h"
 #include "V3Life.h"
@@ -118,6 +119,7 @@ static void process() {
     V3LinkLValue::linkLValue(v3Global.rootp());
     // Convert return/continue/disable to jumps
     V3LinkJump::linkJump(v3Global.rootp());
+    V3Increments::increments(v3Global.rootp());
     V3Error::abortIfErrors();
 
     if (v3Global.opt.stats()) V3Stats::statsStageAll(v3Global.rootp(), "Link");

@@ -4447,6 +4447,11 @@ idArrayed<nodep>:		// IEEE: id + select
 		id						{ $$ = new AstParseRef($<fl>1,VParseRefExp::PX_TEXT,*$1,NULL,NULL); }
 	//			// IEEE: id + part_select_range/constant_part_select_range
 	|	idArrayed '[' expr ']'				{ $$ = new AstSelBit($2,$1,$3); }  // Or AstArraySel, don't know yet.
+	|       idArrayed '[' yP_PLUSPLUS   expr ']'		{ $$ = new AstSelBit($2,$1,new AstPreInc($3,$4, new AstConst($3, 1))); }
+	|       idArrayed '[' yP_MINUSMINUS expr ']'		{ $$ = new AstSelBit($2,$1,new AstPreDec($3,$4, new AstConst($3, 1))); }
+	|       idArrayed '[' expr yP_PLUSPLUS ']'		{ $$ = new AstSelBit($2,$1,new AstPostInc($4,$3, new AstConst($4, 1))); }
+	|       idArrayed '[' expr yP_MINUSMINUS ']'		{ $$ = new AstSelBit($2,$1,new AstPostDec($4,$3, new AstConst($4, 1))); }
+
 	|	idArrayed '[' constExpr ':' constExpr ']'	{ $$ = new AstSelExtract($2,$1,$3,$5); }
 	//			// IEEE: id + indexed_range/constant_indexed_range
 	|	idArrayed '[' expr yP_PLUSCOLON  constExpr ']'	{ $$ = new AstSelPlus($2,$1,$3,$5); }
