@@ -24,16 +24,19 @@ module t (/*AUTOARG*/
 
    initial begin
 
+      /*
       pos = 3;
       b = test_string[--pos];
       if (b !== "c") $stop;
       if (pos !== 2) $stop;
+      */
 
       pos = 0;
       b = test_string[++pos];
       if (b !== "b") $stop;
       if (pos !== 1) $stop;
 
+      /*
       pos = 3;
       b = test_string[pos--];
       if (b !== "d") $stop;
@@ -58,6 +61,7 @@ module t (/*AUTOARG*/
       val = 0 && array3d[0][0][++pos];
       if (val != 0) $stop;
       if (pos != 0) $stop;
+      */
 
       $write("*-* All Finished *-*\n");
       $finish;
