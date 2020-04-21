@@ -106,7 +106,7 @@ public:
         string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
 
         AstVar* varp
-            = new AstVar(fl, AstVarType::BLOCKTEMP, name, back->backp()->findSigned32DType());
+            = new AstVar(fl, AstVarType::BLOCKTEMP, name, nodep->dtypep());
         insertBefore(backp->backp(), varp);
 
         insertBefore(backp->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
@@ -134,7 +134,7 @@ public:
         string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
 
         AstVar* varp
-            = new AstVar(fl, AstVarType::BLOCKTEMP, name, back->backp()->findSigned32DType());
+            = new AstVar(fl, AstVarType::BLOCKTEMP, name, nodep->dtypep());
         insertBefore(backp->backp(), varp);
 
         insertBefore(backp->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
