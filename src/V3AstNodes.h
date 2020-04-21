@@ -7107,38 +7107,18 @@ public:
     virtual int instrCount() const { return widthInstrs() * instrCountMul() * 10; }
     virtual bool signedFlavor() const { return true; }
 };
-class AstPreInc : public AstNodeBiop {
+class AstPreAdd : public AstNodeBiop {
 public:
-    AstPreInc(FileLine* fl, AstNode* lhsp, AstNode* rhsp)
+    AstPreAdd(FileLine* fl, AstNode* lhsp, AstNode* rhsp)
         : ASTGEN_SUPER(fl, lhsp, rhsp) {
             dtypeFrom(lhsp);
         }
-    ASTNODE_NODE_FUNCS(PreInc)
-    virtual AstNode* cloneType(AstNode* lhsp, AstNode* rhsp) { return new AstPreInc(this->fileline(), lhsp, rhsp); }
+    ASTNODE_NODE_FUNCS(PreAdd)
+    virtual AstNode* cloneType(AstNode* lhsp, AstNode* rhsp) { return new AstPreAdd(this->fileline(), lhsp, rhsp); }
     virtual void numberOperate(V3Number& out, const V3Number& lhs, const V3Number& rhs) {
         out.opAdd(lhs, rhs);
     }
     virtual string emitVerilog() { return "%k(++%r)"; }
-    virtual string emitC() { return "VL_SUB_%lq(%lW, %P, %li, %ri)"; } // TODO FIXME
-    virtual string emitSimpleOperator() { return "-"; }
-    virtual bool cleanOut() const { return false; }
-    virtual bool cleanLhs() const { return false; }
-    virtual bool cleanRhs() const { return false; }
-    virtual bool sizeMattersLhs() const { return true; }
-    virtual bool sizeMattersRhs() const { return true; }
-};
-class AstPreDec : public AstNodeBiop {
-public:
-    AstPreDec(FileLine* fl, AstNode* lhsp, AstNode* rhsp)
-        : ASTGEN_SUPER(fl, lhsp, rhsp) {
-            dtypeFrom(lhsp);
-        }
-    ASTNODE_NODE_FUNCS(PreDec)
-    virtual AstNode* cloneType(AstNode* lhsp, AstNode* rhsp) { return new AstPreDec(this->fileline(), lhsp, rhsp); }
-    virtual void numberOperate(V3Number& out, const V3Number& lhs, const V3Number& rhs) {
-        out.opAdd(lhs, rhs);
-    }
-    virtual string emitVerilog() { return "%k(--%r)"; }
     virtual string emitC() { return "VL_SUB_%lq(%lW, %P, %li, %ri)"; } // TODO FIXME
     virtual string emitSimpleOperator() { return "-"; }
     virtual bool cleanOut() const { return false; }

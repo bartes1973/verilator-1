@@ -56,7 +56,7 @@ public:
 
     virtual ~IncrementsVisitor() {}
 
-    virtual void visit(AstPreInc* nodep) VL_OVERRIDE {
+    virtual void visit(AstPreAdd* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
         AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
@@ -72,25 +72,6 @@ public:
         insertBefore(backp->backp(),
                      new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
                                    new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
-                                              new AstConst(fl, 1))));
-    }
-
-    virtual void visit(AstPreDec* nodep) VL_OVERRIDE {
-        iterateChildren(nodep);
-
-        AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
-        AstNode* back = nodep->backp();
-
-        nodep->replaceWith(new AstVarRef(back->fileline(), vr->varp(), false));
-
-        VL_DO_DANGLING(nodep->deleteTree(), nodep);
-
-        AstNode* replace = back->op1p();
-        FileLine* fl = replace->fileline();
-
-        insertBefore(back->backp(),
-                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
-                                   new AstSub(fl, new AstVarRef(fl, vr->varp(), false),
                                               new AstConst(fl, 1))));
     }
 
