@@ -37,7 +37,7 @@
 class IncrementsVisitor : public AstNVisitor {
 private:
     // STATE
-    int                 m_modIncrementsNum;  // Var name counter
+    int m_modIncrementsNum;  // Var name counter
 
     // METHODS
     void insertBefore(AstNode* placep, AstNode* newp) {
@@ -59,146 +59,102 @@ public:
     virtual void visit(AstPreInc* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
-        AstNodeVarRef *vr = VN_CAST(nodep->op1p(), VarRef);
-        AstNode *back = nodep->backp();
+        AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
+        AstNode* back = nodep->backp();
 
-        nodep->replaceWith(new AstVarRef(
-                    back->fileline(),
-                    vr->varp(),
-                    false));
+        nodep->replaceWith(new AstVarRef(back->fileline(), vr->varp(), false));
 
         VL_DO_DANGLING(nodep->deleteTree(), nodep);
 
-        AstNode *replace = back->op1p();
-        FileLine *fl = replace->fileline();
+        AstNode* replace = back->op1p();
+        FileLine* fl = replace->fileline();
 
         insertBefore(back->backp(),
-            new AstAssign(fl,
-                new AstVarRef(fl, vr->varp(), true),
-                new AstAdd(fl,
-                    new AstVarRef(fl, vr->varp(), false),
-                    new AstConst(fl, 1)
-                )
-            )
-        );
+                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
+                                   new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
+                                              new AstConst(fl, 1))));
     }
 
     virtual void visit(AstPreDec* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
-        AstNodeVarRef *vr = VN_CAST(nodep->op1p(), VarRef);
-        AstNode *back = nodep->backp();
+        AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
+        AstNode* back = nodep->backp();
 
-        nodep->replaceWith(new AstVarRef(
-                    back->fileline(),
-                    vr->varp(),
-                    false));
+        nodep->replaceWith(new AstVarRef(back->fileline(), vr->varp(), false));
 
         VL_DO_DANGLING(nodep->deleteTree(), nodep);
 
-        AstNode *replace = back->op1p();
-        FileLine *fl = replace->fileline();
+        AstNode* replace = back->op1p();
+        FileLine* fl = replace->fileline();
 
         insertBefore(back->backp(),
-            new AstAssign(fl,
-                new AstVarRef(fl, vr->varp(), true),
-                new AstSub(fl,
-                    new AstVarRef(fl, vr->varp(), false),
-                    new AstConst(fl, 1)
-                )
-            )
-        );
+                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
+                                   new AstSub(fl, new AstVarRef(fl, vr->varp(), false),
+                                              new AstConst(fl, 1))));
     }
 
     virtual void visit(AstPostInc* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
-        AstNodeVarRef *vr = VN_CAST(nodep->op1p(), VarRef);
-        AstNode *back = nodep->backp();
+        AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
+        AstNode* back = nodep->backp();
 
-        AstNode *replace = back->op1p();
-        FileLine *fl = replace->fileline();
+        AstNode* replace = back->op1p();
+        FileLine* fl = replace->fileline();
 
-        string name = string("__Vincrement")+cvtToStr(m_modIncrementsNum++);
+        string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
 
-        AstVar* varp = new AstVar(fl, AstVarType::BLOCKTEMP, name,
-                                  back->backp()->findSigned32DType());
+        AstVar* varp
+            = new AstVar(fl, AstVarType::BLOCKTEMP, name, back->backp()->findSigned32DType());
         insertBefore(back->backp(), varp);
 
-        insertBefore(back->backp(),
-            new AstAssign(fl,
-                new AstVarRef(fl, varp, true),
-                new AstVarRef(fl, vr->varp(), false)
-            )
-        );
+        insertBefore(back->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
+                                                  new AstVarRef(fl, vr->varp(), false)));
 
         insertBefore(back->backp(),
-            new AstAssign(fl,
-                new AstVarRef(fl, vr->varp(), true),
-                new AstAdd(fl,
-                    new AstVarRef(fl, vr->varp(), false),
-                    new AstConst(fl, 1)
-                )
-            )
-        );
+                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
+                                   new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
+                                              new AstConst(fl, 1))));
 
-        nodep->replaceWith(new AstVarRef(
-                    back->fileline(),
-                    varp,
-                    false));
+        nodep->replaceWith(new AstVarRef(back->fileline(), varp, false));
 
         VL_DO_DANGLING(nodep->deleteTree(), nodep);
-
     }
 
     virtual void visit(AstPostDec* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
-        AstNodeVarRef *vr = VN_CAST(nodep->op1p(), VarRef);
-        AstNode *back = nodep->backp();
+        AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
+        AstNode* back = nodep->backp();
 
-        AstNode *replace = back->op1p();
-        FileLine *fl = replace->fileline();
+        AstNode* replace = back->op1p();
+        FileLine* fl = replace->fileline();
 
-        string name = string("__Vincrement")+cvtToStr(m_modIncrementsNum++);
+        string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
 
-        AstVar* varp = new AstVar(fl, AstVarType::BLOCKTEMP, name,
-                                  back->backp()->findSigned32DType());
+        AstVar* varp
+            = new AstVar(fl, AstVarType::BLOCKTEMP, name, back->backp()->findSigned32DType());
         insertBefore(back->backp(), varp);
 
-        insertBefore(back->backp(),
-            new AstAssign(fl,
-                new AstVarRef(fl, varp, true),
-                new AstVarRef(fl, vr->varp(), false)
-            )
-        );
+        insertBefore(back->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
+                                                  new AstVarRef(fl, vr->varp(), false)));
 
         insertBefore(back->backp(),
-            new AstAssign(fl,
-                new AstVarRef(fl, vr->varp(), true),
-                new AstSub(fl,
-                    new AstVarRef(fl, vr->varp(), false),
-                    new AstConst(fl, 1)
-                )
-            )
-        );
+                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
+                                   new AstSub(fl, new AstVarRef(fl, vr->varp(), false),
+                                              new AstConst(fl, 1))));
 
-        nodep->replaceWith(new AstVarRef(
-                    back->fileline(),
-                    varp,
-                    false));
+        nodep->replaceWith(new AstVarRef(back->fileline(), varp, false));
 
         VL_DO_DANGLING(nodep->deleteTree(), nodep);
-
     }
 
     virtual void visit(AstNode* nodep) VL_OVERRIDE { iterateChildren(nodep); }
 };
 
 void V3Increments::increments(AstNetlist* nodep) {
-    UINFO(2,__FUNCTION__<<": "<<endl);
-    {
-        IncrementsVisitor bvisitor (nodep);
-    }  // Destruct before checking
+    UINFO(2, __FUNCTION__ << ": " << endl);
+    { IncrementsVisitor bvisitor(nodep); }  // Destruct before checking
     V3Global::dumpCheckGlobalTree("link", 0, v3Global.opt.dumpTreeLevel(__FILE__) >= 3);
 }
