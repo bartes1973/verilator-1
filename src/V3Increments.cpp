@@ -60,6 +60,8 @@ public:
         iterateChildren(nodep);
 
         AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
+        AstConst* constp = VN_CAST(nodep->op2p(), Const);
+        AstConst* newconstp = new AstConst(nodep->fileline(), constp->num());
         AstNode* backp = nodep->backp();
 
         nodep->replaceWith(new AstVarRef(backp->fileline(), vr->varp(), false));
@@ -69,16 +71,19 @@ public:
         AstNode* replacep = backp->op1p();
         FileLine* fl = replacep->fileline();
 
+
         insertBefore(backp->backp(),
                      new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
                                    new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
-                                              new AstConst(fl, 1))));
+                                              newconstp)));
     }
 
-    virtual void visit(AstPostInc* nodep) VL_OVERRIDE {
+    virtual void visit(AstPostAdd* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
         AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
+        AstConst* constp = VN_CAST(nodep->op2p(), Const);
+        AstConst* newconstp = new AstConst(nodep->fileline(), constp->num());
         AstNode* backp = nodep->backp();
 
         AstNode* replacep = backp->op1p();
@@ -96,35 +101,7 @@ public:
         insertBefore(backp->backp(),
                      new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
                                    new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
-                                              new AstConst(fl, 1))));
-
-        nodep->replaceWith(new AstVarRef(backp->fileline(), varp, false));
-
-        VL_DO_DANGLING(nodep->deleteTree(), nodep);
-    }
-
-    virtual void visit(AstPostDec* nodep) VL_OVERRIDE {
-        iterateChildren(nodep);
-
-        AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
-        AstNode* backp = nodep->backp();
-
-        AstNode* replacep = backp->op1p();
-        FileLine* fl = replacep->fileline();
-
-        string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
-
-        AstVar* varp
-            = new AstVar(fl, AstVarType::BLOCKTEMP, name, nodep->dtypep());
-        insertBefore(backp->backp(), varp);
-
-        insertBefore(backp->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
-                                                  new AstVarRef(fl, vr->varp(), false)));
-
-        insertBefore(backp->backp(),
-                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
-                                   new AstSub(fl, new AstVarRef(fl, vr->varp(), false),
-                                              new AstConst(fl, 1))));
+                                              newconstp)));
 
         nodep->replaceWith(new AstVarRef(backp->fileline(), varp, false));
 

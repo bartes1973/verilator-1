@@ -4448,9 +4448,9 @@ idArrayed<nodep>:		// IEEE: id + select
 	//			// IEEE: id + part_select_range/constant_part_select_range
 	|	idArrayed '[' expr ']'				{ $$ = new AstSelBit($2,$1,$3); }  // Or AstArraySel, don't know yet.
 	|       idArrayed '[' yP_PLUSPLUS   expr ']'		{ $$ = new AstSelBit($2,$1,new AstPreAdd($3,$4, new AstConst($3, AstConst::StringToParse(), "1"))); }
-	|       idArrayed '[' yP_MINUSMINUS expr ']'		{ $$ = new AstSelBit($2,$1,new AstPreAdd($3,$4, new AstConst($3, AstConst::StringToParse(), "-1"))); }
-	|       idArrayed '[' expr yP_PLUSPLUS ']'		{ $$ = new AstSelBit($2,$1,new AstPostInc($4,$3, new AstConst($4, 1))); }
-	|       idArrayed '[' expr yP_MINUSMINUS ']'		{ $$ = new AstSelBit($2,$1,new AstPostDec($4,$3, new AstConst($4, 1))); }
+	|       idArrayed '[' yP_MINUSMINUS expr ']'		{ $$ = new AstSelBit($2,$1,new AstPreAdd($3,$4, new AstConst($3, -1))); }
+	|       idArrayed '[' expr yP_PLUSPLUS ']'		{ $$ = new AstSelBit($2,$1,new AstPostAdd($4,$3, new AstConst($4, 1))); }
+	|       idArrayed '[' expr yP_MINUSMINUS ']'		{ $$ = new AstSelBit($2,$1,new AstPostAdd($4,$3, new AstConst($4, -1))); }
 
 	|	idArrayed '[' constExpr ':' constExpr ']'	{ $$ = new AstSelExtract($2,$1,$3,$5); }
 	//			// IEEE: id + indexed_range/constant_indexed_range

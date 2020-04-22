@@ -7127,38 +7127,18 @@ public:
     virtual bool sizeMattersLhs() const { return true; }
     virtual bool sizeMattersRhs() const { return true; }
 };
-class AstPostInc : public AstNodeBiop {
+class AstPostAdd : public AstNodeBiop {
 public:
-    AstPostInc(FileLine* fl, AstNode* lhsp, AstNode* rhsp)
+    AstPostAdd(FileLine* fl, AstNode* lhsp, AstNode* rhsp)
         : ASTGEN_SUPER(fl, lhsp, rhsp) {
             dtypeFrom(lhsp);
         }
-    ASTNODE_NODE_FUNCS(PostInc)
-    virtual AstNode* cloneType(AstNode* lhsp, AstNode* rhsp) { return new AstPostInc(this->fileline(), lhsp, rhsp); }
+    ASTNODE_NODE_FUNCS(PostAdd)
+    virtual AstNode* cloneType(AstNode* lhsp, AstNode* rhsp) { return new AstPostAdd(this->fileline(), lhsp, rhsp); }
     virtual void numberOperate(V3Number& out, const V3Number& lhs, const V3Number& rhs) {
         out.opAdd(lhs, rhs);
     }
     virtual string emitVerilog() { return "%k(%r++)"; }
-    virtual string emitC() { return "VL_SUB_%lq(%lW, %P, %li, %ri)"; } // TODO FIXME
-    virtual string emitSimpleOperator() { return "-"; }
-    virtual bool cleanOut() const { return false; }
-    virtual bool cleanLhs() const { return false; }
-    virtual bool cleanRhs() const { return false; }
-    virtual bool sizeMattersLhs() const { return true; }
-    virtual bool sizeMattersRhs() const { return true; }
-};
-class AstPostDec : public AstNodeBiop {
-public:
-    AstPostDec(FileLine* fl, AstNode* lhsp, AstNode* rhsp)
-        : ASTGEN_SUPER(fl, lhsp, rhsp) {
-            dtypeFrom(lhsp);
-        }
-    ASTNODE_NODE_FUNCS(PostDec)
-    virtual AstNode* cloneType(AstNode* lhsp, AstNode* rhsp) { return new AstPostDec(this->fileline(), lhsp, rhsp); }
-    virtual void numberOperate(V3Number& out, const V3Number& lhs, const V3Number& rhs) {
-        out.opAdd(lhs, rhs);
-    }
-    virtual string emitVerilog() { return "%k(%r--)"; }
     virtual string emitC() { return "VL_SUB_%lq(%lW, %P, %li, %ri)"; } // TODO FIXME
     virtual string emitSimpleOperator() { return "-"; }
     virtual bool cleanOut() const { return false; }
