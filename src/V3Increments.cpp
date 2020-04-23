@@ -34,6 +34,51 @@
 
 //######################################################################
 
+class IncrementsAssignVisitor : public AstNVisitor {
+private:
+    // NODE STATE
+    //  AstVar::user4()         // bool; occurs on LHS of current assignment
+    AstUser4InUse m_inuser4;
+
+    // STATE
+    bool m_noopt;  // Disable optimization of variables in this block
+
+    // METHODS
+    VL_DEBUG_FUNC;  // Declare debug()
+
+    // VISITORS
+    virtual void visit(AstNodeAssign* nodep) VL_OVERRIDE {
+        // AstNode::user4ClearTree();  // Implied by AstUser4InUse
+        // LHS first as fewer varrefs
+        iterateAndNextNull(nodep->lhsp());
+        // Now find vars marked as lhs
+        iterateAndNextNull(nodep->rhsp());
+    }
+    virtual void visit(AstVarRef* nodep) VL_OVERRIDE {
+        // it's LHS var is used so need a deep temporary
+        if (nodep->lvalue()) {
+            nodep->varp()->user4(true);
+        } else {
+            if (nodep->varp()->user4()) {
+                if (!m_noopt) UINFO(4, "Block has LHS+RHS var: " << nodep << endl);
+                m_noopt = true;
+            }
+        }
+    }
+    virtual void visit(AstNode* nodep) VL_OVERRIDE { iterateChildren(nodep); }
+
+public:
+    // CONSTRUCTORS
+    explicit IncrementsAssignVisitor(AstNodeAssign* nodep) {
+        UINFO(4, "  IncrementsAssignVisitor on " << nodep << endl);
+        m_noopt = false;
+        iterate(nodep);
+    }
+    virtual ~IncrementsAssignVisitor() {}
+    bool noOpt() const { return m_noopt; }
+};
+
+
 class IncrementsVisitor : public AstNVisitor {
 private:
     // STATE
@@ -45,8 +90,6 @@ private:
     AstWhile* m_inWhilep;  // Inside while loop, special statement additions
     AstTraceInc* m_inTracep;  // Inside while loop, special statement additions
     bool m_assignLhs;  // Inside assignment lhs, don't breakup extracts
-
-    bool m_noopt;  // Disable optimization of variables in this block
 
     // METHODS
     void insertBefore(AstNode* placep, AstNode* newp) {
@@ -65,6 +108,7 @@ private:
     }
 
     void insertBeforeStmt(AstNode* newp) {
+        // 
         // Insert newp before m_stmtp
         if (m_inWhilep) {
             // Statements that are needed for the 'condition' in a while
@@ -86,6 +130,8 @@ private:
     void createDeepTemp(AstNode* nodep, bool noSubst) {
         if (debug() > 8) nodep->dumpTree(cout, "deepin:");
 
+        std::cout << "[mjsob] [" << __func__ << ":" << __LINE__ << std::endl;
+
         AstNRelinker linker;
         nodep->unlinkFrBack(&linker);
 
@@ -106,14 +152,19 @@ public:
     // CONSTRUCTORS
     explicit IncrementsVisitor(AstNetlist* nodep) {
         m_modIncrementsNum = 0;
+        m_modp = NULL;
+        m_funcp = NULL;
+        m_stmtp = NULL;
+        m_inWhilep = NULL;
+        m_inTracep = NULL;
+        m_assignLhs = false;
         iterate(nodep);
     }
 
     virtual ~IncrementsVisitor() {}
 
-    bool noOpt() const { return m_noopt; }
-
     void startStatement(AstNode* nodep) {
+        std::cout << "[mjsob] start stmt" << std::endl;
         m_assignLhs = false;
         if (m_funcp) m_stmtp = nodep;
     }
@@ -122,6 +173,8 @@ public:
         startStatement(nodep);
         iterateAndNextNull(nodep->precondsp());
         startStatement(nodep);
+
+        std::cout << "[mjsob] setting while to nodep" << std::endl;
         m_inWhilep = nodep;
         iterateAndNextNull(nodep->condp());
         m_inWhilep = NULL;
@@ -133,9 +186,9 @@ public:
     virtual void visit(AstNodeAssign* nodep) VL_OVERRIDE {
         startStatement(nodep);
 //XXX: Not sure if this is needed
-#if 0
+#if 1
         {
-            bool noopt = IncrementsVisitor(nodep).noOpt();
+            bool noopt = IncrementsAssignVisitor(nodep).noOpt();
             if (noopt && !nodep->user1()) {
                 // Need to do this even if not wide, as e.g. a select may be on a wide operator
                 UINFO(4, "Deep temp for LHS/RHS\n");
