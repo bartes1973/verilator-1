@@ -201,9 +201,8 @@ public:
 
         string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
 
-        // TODO: change findSigned32Type() to dtype() - right now dtype() does not work, so leaving this for now.
         AstVar* varp
-            = new AstVar(fl, AstVarType::BLOCKTEMP, name, backp->backp()->findSigned32DType());
+            = new AstVar(fl, AstVarType::BLOCKTEMP, name, vr->varp()->subDTypep());
         insertBefore(backp->backp(), varp);
 
         insertBefore(backp->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
