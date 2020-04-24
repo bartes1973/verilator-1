@@ -163,8 +163,28 @@ public:
 
     virtual ~IncrementsVisitor() {}
 
+    // VISITORS
+    virtual void visit(AstNodeModule* nodep) VL_OVERRIDE {
+        UINFO(4, " MOD   " << nodep << endl);
+        std::cout << "[mjsob] visit module, node: " << nodep->typeName() << " line: " << nodep->fileline() << std::endl;
+        AstNodeModule* origModp = m_modp;
+        {
+            m_modp = nodep;
+            m_funcp = NULL;
+            iterateChildren(nodep);
+        }
+        m_modp = origModp;
+    }
+    virtual void visit(AstCFunc* nodep) VL_OVERRIDE {
+        std::cout << "[mjsob] visit func, node: " << nodep->typeName() << " line: " << nodep->fileline() << std::endl;
+        m_funcp = nodep;
+        iterateChildren(nodep);
+        m_funcp = NULL;
+    }
+
     void startStatement(AstNode* nodep) {
-        std::cout << "[mjsob] start stmt" << std::endl;
+        std::cout << "[mjsob] start stmt, node: " << nodep->typeName() << " line: " << nodep->fileline() << std::endl;
+        std::cout << "[mjsob] m_funcp: " << m_funcp << std::endl;
         m_assignLhs = false;
         if (m_funcp) m_stmtp = nodep;
     }
