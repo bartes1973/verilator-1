@@ -198,8 +198,6 @@ private:
         m_modp = origModp;
     }
     virtual void visit(AstCFunc* nodep) VL_OVERRIDE {
-        std::cout << "[Premit CFunc] [" << __func__ << ":" << __LINE__ << "]" <<  std::endl;
-        std::cout << "[Premit CFunc] visit cfunc, node: " << nodep->typeName() << " line: " << nodep->fileline() << std::endl;
         m_funcp = nodep;
         iterateChildren(nodep);
         m_funcp = NULL;
