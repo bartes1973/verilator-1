@@ -36,9 +36,16 @@
 
 class IncrementsVisitor : public AstNVisitor {
 private:
+
+    // TYPES
+    enum InsertMode {
+        IM_BEFORE,  // Pointing at statement ref is in, insert before this
+        IM_AFTER,  // Pointing at last inserted stmt, insert after
+        IM_WHILE_PRECOND  // Pointing to for loop, add to body end
+    };
+
     // STATE
     int m_modIncrementsNum;  // Var name counter
-
     InsertMode m_insMode;  // How to insert
     AstNode* m_insStmtp;  // Where to insert statement
 
@@ -50,18 +57,67 @@ private:
         linker.relink(newp);
     }
 
-public:
-    // CONSTRUCTORS
-    explicit IncrementsVisitor(AstNetlist* nodep) {
-        m_modIncrementsNum = 0;
-        iterate(nodep);
+private:
+    void insertBeforeStmt(AstNode* nodep, AstNode* newp) {
+        // Return node that must be visited, if any
+        // See also AstNode::addBeforeStmt; this predates that function
+        std::cout << "[Increments] [" << __func__ << ":" << __LINE__ << "]" <<  std::endl;
+        if (debug() >= 9) nodep->dumpTree(cout, "-newstmt:");
+        UASSERT_OBJ(m_insStmtp, nodep, "Function not underneath a statement");
+        if (m_insMode == IM_BEFORE) {
+            // Add the whole thing before insertAt
+            UINFO(5, "     IM_Before  " << m_insStmtp << endl);
+            if (debug() >= 9) newp->dumpTree(cout, "-newfunc:");
+            m_insStmtp->addHereThisAsNext(newp);
+        } else if (m_insMode == IM_AFTER) {
+            UINFO(5, "     IM_After   " << m_insStmtp << endl);
+            m_insStmtp->addNextHere(newp);
+        } else if (m_insMode == IM_WHILE_PRECOND) {
+            UINFO(5, "     IM_While_Precond " << m_insStmtp << endl);
+            AstWhile* whilep = VN_CAST(m_insStmtp, While);
+            UASSERT_OBJ(whilep, nodep, "Insert should be under WHILE");
+            whilep->addPrecondsp(newp);
+        } else {
+            nodep->v3fatalSrc("Unknown InsertMode");
+        }
+        m_insMode = IM_AFTER;
+        m_insStmtp = newp;
     }
 
-    virtual ~IncrementsVisitor() {}
+    virtual void visit(AstWhile* nodep) VL_OVERRIDE {
+        // Special, as statements need to be put in different places
+        // Preconditions insert first just before themselves (the normal
+        // rule for other statement types)
+        m_insStmtp = NULL;  // First thing should be new statement
+        iterateAndNextNull(nodep->precondsp());
+        // Conditions insert first at end of precondsp.
+        m_insMode = IM_WHILE_PRECOND;
+        m_insStmtp = nodep;
+        iterateAndNextNull(nodep->condp());
+        // Body insert just before themselves
+        m_insStmtp = NULL;  // First thing should be new statement
+        iterateAndNextNull(nodep->bodysp());
+        iterateAndNextNull(nodep->incsp());
+        // Done the loop
+        m_insStmtp = NULL;  // Next thing should be new statement
+    }
+    virtual void visit(AstNodeFor* nodep) VL_OVERRIDE {
+        nodep->v3fatalSrc(
+            "For statements should have been converted to while statements in V3Begin.cpp");
+    }
+    virtual void visit(AstNodeStmt* nodep) VL_OVERRIDE {
+        if (!nodep->isStatement()) {
+            iterateChildren(nodep);
+            return;
+        }
+        m_insMode = IM_BEFORE;
+        m_insStmtp = nodep;
+        iterateChildren(nodep);
+        m_insStmtp = NULL;  // Next thing should be new statement
+    }
 
     virtual void visit(AstPreAdd* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
-
         AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
         AstConst* constp = VN_CAST(nodep->op2p(), Const);
         AstConst* newconstp = new AstConst(nodep->fileline(), constp->num());
@@ -74,7 +130,7 @@ public:
         AstNode* replacep = backp->op1p();
         FileLine* fl = replacep->fileline();
 
-        insertBeforeStmt(//backp->backp(),
+        insertBeforeStmt(nodep,
                      new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
                                    new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
                                               newconstp)));
@@ -95,12 +151,12 @@ public:
 
         AstVar* varp
             = new AstVar(fl, AstVarType::BLOCKTEMP, name, vr->varp()->subDTypep());
-        insertBefore(backp->backp(), varp);
+        insertBeforeStmt(nodep, varp);
 
-        insertBefore(backp->backp(), new AstAssign(fl, new AstVarRef(fl, varp, true),
+        insertBefore(nodep, new AstAssign(fl, new AstVarRef(fl, varp, true),
                                                   new AstVarRef(fl, vr->varp(), false)));
 
-        insertBefore(backp->backp(),
+        insertBefore(nodep,
                      new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
                                    new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
                                               newconstp)));
@@ -111,6 +167,18 @@ public:
     }
 
     virtual void visit(AstNode* nodep) VL_OVERRIDE { iterateChildren(nodep); }
+
+public:
+    // CONSTRUCTORS
+    explicit IncrementsVisitor(AstNetlist* nodep) {
+        m_modIncrementsNum = 0;
+        m_insMode = IM_BEFORE;
+        m_insStmtp = NULL;
+        iterate(nodep);
+    }
+
+    virtual ~IncrementsVisitor() {}
+
 };
 
 void V3Increments::increments(AstNetlist* nodep) {
