@@ -61,19 +61,20 @@ private:
     void insertBeforeStmt(AstNode* nodep, AstNode* newp) {
         // Return node that must be visited, if any
         // See also AstNode::addBeforeStmt; this predates that function
-        std::cout << "[Increments] [" << __func__ << ":" << __LINE__ << "]" <<  std::endl;
-        if (debug() >= 9) nodep->dumpTree(cout, "-newstmt:");
+        //std::cout << "[Increments] [" << __func__ << ":" << __LINE__ << "]" <<  std::endl;
+        //nodep->dumpTree(cout, "-newstmt:");
+        //std::cout << "[Increments] [" << __func__ << ":" << __LINE__ << "]" <<  std::endl;
         UASSERT_OBJ(m_insStmtp, nodep, "Function not underneath a statement");
         if (m_insMode == IM_BEFORE) {
             // Add the whole thing before insertAt
-            UINFO(5, "     IM_Before  " << m_insStmtp << endl);
+            std::cout << "     IM_Before  " << m_insStmtp << endl;
             if (debug() >= 9) newp->dumpTree(cout, "-newfunc:");
             m_insStmtp->addHereThisAsNext(newp);
         } else if (m_insMode == IM_AFTER) {
-            UINFO(5, "     IM_After   " << m_insStmtp << endl);
+            std::cout << "     IM_After   " << m_insStmtp << endl;
             m_insStmtp->addNextHere(newp);
         } else if (m_insMode == IM_WHILE_PRECOND) {
-            UINFO(5, "     IM_While_Precond " << m_insStmtp << endl);
+            std::cout << "     IM_While_Precond " << m_insStmtp << endl;
             AstWhile* whilep = VN_CAST(m_insStmtp, While);
             UASSERT_OBJ(whilep, nodep, "Insert should be under WHILE");
             whilep->addPrecondsp(newp);
@@ -118,26 +119,62 @@ private:
 
     virtual void visit(AstPreAdd* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
+        std::cout << "visiting preadd...\n";
         AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
         AstConst* constp = VN_CAST(nodep->op2p(), Const);
         AstConst* newconstp = new AstConst(nodep->fileline(), constp->num());
         AstNode* backp = nodep->backp();
 
-        nodep->replaceWith(new AstVarRef(backp->fileline(), vr->varp(), false));
+        // XXX create new variable
+        FileLine* fl = backp->fileline();
+# if 0
+        string* tmp_name = new string("some_name");
+        AstVar* varp = new AstVar(backp->fileline(), AstVarType::VAR, *tmp_name, vr->varp());
+#else
+        string name = string("__Vincrement") + cvtToStr(m_modIncrementsNum++);
+        // FileLine* fl = replacep->fileline();
+        AstVar* varp
+            = new AstVar(fl, AstVarType::BLOCKTEMP, name, vr->varp()->subDTypep());
+# endif
+        // Declare the variable
+        m_insStmtp->addHereThisAsNext(varp);
+
+        // Increment it by one
+        m_insStmtp->addHereThisAsNext(
+                     new AstAssign(fl, new AstVarRef(fl, varp, true),
+                                   new AstAdd(fl, new AstVarRef(fl, varp, false),
+                                              newconstp)));
+
+        //m_insStmtp->dumpTree(cout, "!!!!!!!!!!!!");
+        m_insStmtp->addHereThisAsNext(
+                     new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
+                                       new AstVarRef(fl, varp, false)));
+
+        // Replace the node with the temporary
+        FileLine*  fl_inner = backp->op1p()->fileline();
+        backp->dumpTree(cout, "before----");
+        nodep->replaceWith(new AstVarRef(fl_inner, varp, true));
 
         VL_DO_DANGLING(nodep->deleteTree(), nodep);
 
+# if 0
         AstNode* replacep = backp->op1p();
-        FileLine* fl = replacep->fileline();
+        /* FileLine* */  fl = replacep->fileline();
 
         insertBeforeStmt(nodep,
                      new AstAssign(fl, new AstVarRef(fl, vr->varp(), true),
                                    new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
                                               newconstp)));
+# endif
+
+        backp->dumpTree(cout, "after-----");
+        cout << "exiting\n";
     }
 
     virtual void visit(AstPostAdd* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
+
+        std::cout << "visiting postadd...\n";
 
         AstNodeVarRef* vr = VN_CAST(nodep->op1p(), VarRef);
         AstConst* constp = VN_CAST(nodep->op2p(), Const);
@@ -171,6 +208,7 @@ private:
 public:
     // CONSTRUCTORS
     explicit IncrementsVisitor(AstNetlist* nodep) {
+        std::cout << "visitor constructor...\n";
         m_modIncrementsNum = 0;
         m_insMode = IM_BEFORE;
         m_insStmtp = NULL;
