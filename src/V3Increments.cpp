@@ -142,7 +142,7 @@ private:
         // Increment it by one
         m_insStmtp->addHereThisAsNext(
                      new AstAssign(fl, new AstVarRef(fl, varp, true),
-                                   new AstAdd(fl, new AstVarRef(fl, varp, false),
+                                   new AstAdd(fl, new AstVarRef(fl, vr->varp(), false),
                                               newconstp)));
 
         //m_insStmtp->dumpTree(cout, "!!!!!!!!!!!!");
@@ -172,6 +172,8 @@ private:
     }
 
     virtual void visit(AstPostAdd* nodep) VL_OVERRIDE {
+# if 1
+# else
         iterateChildren(nodep);
 
         std::cout << "visiting postadd...\n";
@@ -201,6 +203,7 @@ private:
         nodep->replaceWith(new AstVarRef(backp->fileline(), varp, false));
 
         VL_DO_DANGLING(nodep->deleteTree(), nodep);
+# endif
     }
 
     virtual void visit(AstNode* nodep) VL_OVERRIDE { iterateChildren(nodep); }
