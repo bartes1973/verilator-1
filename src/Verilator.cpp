@@ -57,6 +57,7 @@
 #include "V3Life.h"
 #include "V3LifePost.h"
 #include "V3LinkDot.h"
+#include "V3LinkFork.h"
 #include "V3LinkJump.h"
 #include "V3LinkInc.h"
 #include "V3LinkLValue.h"
@@ -125,6 +126,8 @@ static void process() {
     V3LinkJump::linkJump(v3Global.rootp());
     // Convert --/++ to normal operations. Must be after LinkJump.
     V3LinkInc::linkIncrements(v3Global.rootp());
+    // Convert fork/join to block sequence
+    V3LinkFork::linkFork(v3Global.rootp());
     V3Error::abortIfErrors();
 
     if (v3Global.opt.stats()) V3Stats::statsStageAll(v3Global.rootp(), "Link");
