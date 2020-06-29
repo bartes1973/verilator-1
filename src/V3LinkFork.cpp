@@ -36,9 +36,13 @@ class LinkForkVisitor : public AstNVisitor {
     virtual void visit(AstFork* nodep) VL_OVERRIDE {
         iterateChildren(nodep);
 
+        // TODO verify join type first, support only regular join
+        if (nodep->joinType().join()) {
+            return;
+        }
+
         nodep->backp()->dumpTree(cout, "pre  fork ");
 
-        // TODO verify join type first, support only regular join
 
         // TODO convert AstFork to AstBegin
         AstBegin* blockp =
